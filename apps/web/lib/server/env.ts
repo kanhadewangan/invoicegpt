@@ -1,6 +1,14 @@
 import "server-only";
 
-type SecretName = "DATABASE_URL" | "PAYPAL_CLIENT_ID" | "PAYPAL_SECRET" | "PAYPAL_WEBHOOK_ID" | "LLM_API_KEY";
+type SecretName =
+  | "DATABASE_URL"
+  | "PAYPAL_CLIENT_ID"
+  | "PAYPAL_SECRET"
+  | "PAYPAL_WEBHOOK_ID"
+  | "LLM_API_KEY"
+  | "NOTION_CLIENT_ID"
+  | "NOTION_CLIENT_SECRET"
+  | "TOKEN_ENCRYPTION_KEY";
 
 export class ConfigError extends Error {}
 

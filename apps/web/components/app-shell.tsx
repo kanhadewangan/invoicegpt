@@ -1,15 +1,17 @@
 "use client";
 
-import { FilePlus2, LayoutDashboard, type LucideIcon } from "lucide-react";
+import { FilePlus2, LayoutDashboard, Settings, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "./theme-toggle";
+import { Avatar, SignOutButton, type ShellUser } from "./user-menu";
 import { Logo } from "./ui";
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/new", label: "New invoice", icon: FilePlus2 },
   { href: "/dashboard", label: "Invoices", icon: LayoutDashboard },
+  { href: "/settings/integrations", label: "Integrations", icon: Settings },
 ];
 
 function NavLinks({ compact = false }: { compact?: boolean }) {
@@ -32,14 +34,7 @@ function NavLinks({ compact = false }: { compact?: boolean }) {
   });
 }
 
-export function AppShell({ userName, children }: { userName: string; children: ReactNode }) {
-  const initials = userName
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
+export function AppShell({ user, children }: { user: ShellUser; children: ReactNode }) {
   return (
     <div className="lg:grid lg:min-h-dvh lg:grid-cols-[248px_1fr]">
       {/* Desktop sidebar */}
@@ -63,17 +58,18 @@ export function AppShell({ userName, children }: { userName: string; children: R
             </p>
             <p className="mt-1">Test mode: no real money moves.</p>
           </div>
-          <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
+          <div className="flex items-center justify-between gap-1 border-t border-line pt-3">
             <div className="flex min-w-0 items-center gap-2.5 px-1">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-semibold text-brand-text">
-                {initials || "IG"}
-              </span>
+              <Avatar user={user} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{userName}</p>
-                <p className="text-xs text-faint">Demo account</p>
+                <p className="truncate text-sm font-medium">{user.name}</p>
+                <p className="truncate text-xs text-faint">{user.email}</p>
               </div>
             </div>
-            <ThemeToggle />
+            <div className="flex shrink-0">
+              <ThemeToggle />
+              <SignOutButton />
+            </div>
           </div>
         </div>
       </aside>
@@ -84,7 +80,11 @@ export function AppShell({ userName, children }: { userName: string; children: R
           <Link href="/">
             <Logo />
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <SignOutButton />
+            <Avatar user={user} className="ml-1 size-8" />
+          </div>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-4 pb-3">
           <NavLinks compact />

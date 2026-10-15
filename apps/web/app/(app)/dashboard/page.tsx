@@ -5,7 +5,7 @@ import { InvoiceTable } from "@/components/dashboard/invoice-table";
 import { SyncButton } from "@/components/dashboard/sync-button";
 import { ButtonLink, PageHeader, stagger } from "@/components/ui";
 import { formatMoney, type InvoiceView } from "@/lib/invoice-view";
-import { getCurrentUserId } from "@/lib/server/current-user";
+import { requireUser } from "@/lib/server/current-user";
 import { listInvoices } from "@/lib/server/invoices";
 
 export const metadata: Metadata = { title: "Invoices" };
@@ -48,7 +48,8 @@ function StatCard({ label, icon: Icon, tone, invoices, index }: Stat) {
 }
 
 export default async function DashboardPage() {
-  const invoices = await listInvoices(await getCurrentUserId());
+  const user = await requireUser("/dashboard");
+  const invoices = await listInvoices(user.id);
   const withStatus = (...statuses: InvoiceView["status"][]) => invoices.filter((i) => statuses.includes(i.status));
   const stats: Omit<Stat, "index">[] = [
     { label: "Outstanding", icon: Hourglass, tone: "bg-info-soft text-info", invoices: withStatus("SENT", "OVERDUE") },

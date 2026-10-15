@@ -11,13 +11,65 @@ datasource db {
 
 
 
+// User, Session, Account and Verification follow Better Auth's schema (apps/web/lib/server/auth.ts).
 model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  emailVerified Boolean   @default(false)
+  image         String?
+  invoices      Invoice[]
+  sessions      Session[]
+  accounts      Account[]
+  notion        NotionConnection?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Session {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  invoices  Invoice[]
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// A sign-in method linked to a user (here: Google).
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+/// Short-lived values Better Auth uses during sign-in (e.g. OAuth state).
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
 }
 // "Overdue" is not stored: it is SENT with a due date in the past.
 enum InvoiceStatus {
@@ -52,6 +104,44 @@ model Invoice {
   userId             String
   user               User          @relation(fields: [userId], references: [id])
 
+  @@index([userId])
   @@index([status])
   @@index([createdAt])
+}
+
+enum NotionConnectionStatus {
+  ACTIVE
+  /// Token refresh failed (access revoked in Notion); the user must reconnect.
+  NEEDS_RECONNECT
+}
+
+/// One Notion workspace connection per user. Tokens are encrypted (apps/web/lib/server/crypto.ts).
+model NotionConnection {
+  id            String                 @id @default(cuid())
+  userId        String                 @unique
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        NotionConnectionStatus @default(ACTIVE)
+  workspaceId   String
+  workspaceName String?
+  workspaceIcon String?
+  botId         String
+  accessToken   String
+  refreshToken  String?
+
+  /// "Plan work, bill it": the tasks data source and its TaskMapping (@repo/notion)
+  tasksDataSourceId String?
+  tasksMapping      Json?
+  /// Defaults for tasks without a rate of their own
+  defaultHourlyRate Decimal? @db.Decimal(12, 2)
+  currency          String   @default("USD")
+  lastTasksSyncAt   DateTime?
+
+  /// Overdue follow-ups: the data source and its FollowUpMapping (@repo/notion)
+  followUpsDataSourceId String?
+  followUpsMapping      Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
 }

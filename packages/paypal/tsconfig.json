@@ -1,0 +1,8 @@
+{
+  "extends": "@repo/typescript-config/internal-package.json",
+  "compilerOptions": {
+    // Only for the scripts/ folder; src/ uses web-standard APIs (fetch, btoa).
+    "types": ["bun"]
+  },
+  "include": ["src", "scripts"]
+}

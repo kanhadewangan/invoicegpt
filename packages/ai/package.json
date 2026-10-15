@@ -1,0 +1,22 @@
+{
+  "name": "@repo/ai",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "try:extract": "bun --env-file=../../apps/web/.env.local scripts/try-extraction.ts"
+  },
+  "dependencies": {
+    "@repo/shared": "*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/bun": "latest",
+    "typescript": "7.0.2"
+  }
+}

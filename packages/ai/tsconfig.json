@@ -1,0 +1,8 @@
+{
+  "extends": "@repo/typescript-config/internal-package.json",
+  "compilerOptions": {
+    // Only for the scripts/ folder; src/ runs anywhere the Anthropic SDK does.
+    "types": ["bun"]
+  },
+  "include": ["src", "scripts"]
+}

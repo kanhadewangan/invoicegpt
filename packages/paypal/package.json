@@ -1,0 +1,22 @@
+{
+  "name": "@repo/paypal",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "send:test": "bun --env-file=../../apps/web/.env.local scripts/send-test-invoice.ts",
+    "webhook:register": "bun --env-file=../../apps/web/.env.local scripts/register-webhook.ts"
+  },
+  "dependencies": {
+    "@repo/shared": "*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/bun": "latest",
+    "typescript": "7.0.2"
+  }
+}

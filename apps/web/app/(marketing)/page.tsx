@@ -7,6 +7,9 @@ import {
   Coins,
   CreditCard,
   ImageIcon,
+  LayoutDashboard,
+  ListChecks,
+  Plug,
   ShieldCheck,
   Sparkles,
   type LucideIcon,
@@ -15,6 +18,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink, Logo, stagger } from "@/components/ui";
+import { Avatar } from "@/components/user-menu";
+import { getSession } from "@/lib/server/current-user";
 
 const STATS = [
   { value: "<30s", label: "from pasted chat to a sent invoice" },
@@ -41,12 +46,62 @@ const STEPS: { title: string; body: string; actor: string }[] = [
 ];
 
 const FEATURES: { icon: LucideIcon; title: string; body: string }[] = [
-  { icon: ImageIcon, title: "Reads screenshots", body: "Drop in a chat screenshot and it reads it like text." },
-  { icon: ShieldCheck, title: "Never makes things up", body: "Missing an email or a price? It asks you instead of guessing." },
-  { icon: Coins, title: "Any currency", body: "Understands ₹, €, “50 euros” and “2k”, and bills in the right one." },
-  { icon: BellRing, title: "Reminders that fit", body: "AI writes a follow-up whose tone matches how overdue the invoice is." },
-  { icon: Activity, title: "Live payment status", body: "The dashboard flips to Paid the moment your client pays." },
-  { icon: CreditCard, title: "Paid through PayPal", body: "Clients pay by card or PayPal. No new account for them." },
+  {
+    icon: ImageIcon,
+    title: "Reads screenshots",
+    body: "Drop in a chat screenshot and it reads it like text.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Never makes things up",
+    body: "Missing an email or a price? It asks you instead of guessing.",
+  },
+  {
+    icon: Coins,
+    title: "Any currency",
+    body: "Understands ₹, €, “50 euros” and “2k”, and bills in the right one.",
+  },
+  {
+    icon: BellRing,
+    title: "Reminders that fit",
+    body: "AI writes a follow-up whose tone matches how overdue the invoice is.",
+  },
+  {
+    icon: Activity,
+    title: "Live payment status",
+    body: "The dashboard flips to Paid the moment your client pays.",
+  },
+  {
+    icon: CreditCard,
+    title: "Paid through PayPal",
+    body: "Clients pay by card or PayPal. No new account for them.",
+  },
+];
+
+const NOTION_STEPS: {
+  icon: LucideIcon;
+  title: string;
+  body: string;
+  available: boolean;
+}[] = [
+  {
+    icon: Plug,
+    title: "Connect your workspace",
+    body: "Pick exactly which databases InvoiceGPT can see. Disconnect any time.",
+    available: true,
+  },
+  {
+    icon: ListChecks,
+    title: "Done tasks become invoice lines",
+    body: "Mark work done in Notion and it waits on your dashboard, hours × rate, ready to bill.",
+    available: false,
+  },
+  {
+    icon: BellRing,
+    title: "Overdue? It lands in your planner",
+    body: "A follow-up task appears in Notion when an invoice is late, and ticks itself off when it's paid.",
+    available: false,
+  },
 ];
 
 const at = (ms: number) => ({ animationDelay: `${ms}ms` });
@@ -66,7 +121,10 @@ function Extract({ children, delay }: { children: ReactNode; delay: number }) {
 // The preview tells the product story once: chat arrives → values get picked out → invoice builds → Sent.
 function HeroPreview() {
   return (
-    <div className="animate-enter overflow-hidden rounded-2xl border border-line-strong bg-surface shadow-pop" style={at(450)}>
+    <div
+      className="animate-enter overflow-hidden rounded-2xl border border-line-strong bg-surface shadow-pop"
+      style={at(450)}
+    >
       <div className="flex items-center justify-between border-b border-line px-4 py-2.5 font-mono text-[11px] tracking-wider text-faint uppercase">
         <span className="flex items-center gap-1.5">
           <span className="size-2 rounded-full bg-line-strong" />
@@ -135,10 +193,96 @@ function HeroPreview() {
             </li>
           </ul>
 
-          <div className="animate-enter mt-5 flex items-end justify-between border-t border-line-strong pt-4" style={at(2550)}>
+          <div
+            className="animate-enter mt-5 flex items-end justify-between border-t border-line-strong pt-4"
+            style={at(2550)}
+          >
             <span className="text-xs text-faint">Due in 15 days · USD</span>
             <span className="text-3xl font-semibold tracking-tight tabular-nums">$400.00</span>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A Notion-style task table: finished rows flow into "ready to bill" lines. Illustrative only. */
+function NotionPreview() {
+  const rows = [
+    { task: "Homepage redesign", client: "Northwind", hours: 12, done: true },
+    { task: "Logo variations", client: "Northwind", hours: 4, done: true },
+    { task: "Brand guide v2", client: "Northwind", hours: 6, done: false },
+    { task: "Landing copy", client: "Atelier Nord", hours: 3, done: false },
+  ];
+  const rate = 45;
+  const billable = rows.filter((r) => r.done);
+  const total = billable.reduce((sum, r) => sum + r.hours * rate, 0);
+
+  return (
+    <div className="reveal relative self-start">
+      <div className="overflow-hidden rounded-2xl border border-line-strong bg-surface shadow-pop">
+        <div className="flex items-center gap-2 border-b border-line px-4 py-3">
+          <span className="grid size-6 place-items-center rounded-md border border-line-strong font-serif text-xs font-bold">
+            N
+          </span>
+          <span className="text-sm font-semibold">Client work</span>
+          <span className="ml-auto font-mono text-[11px] tracking-wider text-faint uppercase">Notion · Tasks</span>
+        </div>
+        <table className="w-full text-left text-sm">
+          <thead className="font-mono text-[11px] tracking-wider text-faint uppercase">
+            <tr className="border-b border-line">
+              <th className="px-4 py-2 font-normal">Task</th>
+              <th className="hidden px-4 py-2 font-normal sm:table-cell">Client</th>
+              <th className="px-4 py-2 text-right font-normal">Hours</th>
+              <th className="px-4 py-2 font-normal">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {rows.map((row) => (
+              <tr key={row.task} className={row.done ? "bg-success-soft/40" : ""}>
+                <td className="px-4 py-2.5 font-medium">{row.task}</td>
+                <td className="hidden px-4 py-2.5 text-muted sm:table-cell">{row.client}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{row.hours}</td>
+                <td className="px-4 py-2.5">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      row.done ? "bg-success-soft text-success" : "bg-subtle text-muted"
+                    }`}
+                  >
+                    {row.done && <Check className="size-3" strokeWidth={3} />}
+                    {row.done ? "Done" : "In progress"}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Connector into the bill */}
+      <div aria-hidden className="mx-auto h-10 w-px bg-gradient-to-b from-line-strong to-brand" />
+
+      <div className="ml-auto max-w-sm rounded-2xl border border-brand/30 bg-surface p-5 shadow-pop sm:mr-6">
+        <p className="flex items-center justify-between font-mono text-[11px] tracking-wider text-faint uppercase">
+          Ready to bill · Northwind
+          <Sparkles className="size-3.5 text-brand-text" />
+        </p>
+        <ul className="mt-3 space-y-1.5 text-sm">
+          {billable.map((row) => (
+            <li key={row.task} className="flex justify-between gap-3">
+              <span className="text-muted">
+                {row.task}{" "}
+                <span className="text-faint">
+                  · {row.hours}h × ${rate}
+                </span>
+              </span>
+              <span className="tabular-nums">${(row.hours * rate).toFixed(2)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-3 flex items-end justify-between border-t border-line pt-3">
+          <span className="text-xs text-faint">From 2 finished tasks</span>
+          <span className="text-2xl font-semibold tracking-tight tabular-nums">${total.toFixed(2)}</span>
         </div>
       </div>
     </div>
@@ -176,7 +320,9 @@ function Backdrop() {
   );
 }
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const user = (await getSession())?.user ?? null;
+
   return (
     <div className="relative isolate overflow-x-clip">
       <Backdrop />
@@ -192,18 +338,38 @@ export default function LandingPage() {
             <a href="#features" className="transition-colors hover:text-fg">
               Features
             </a>
-            <Link href="/dashboard" className="transition-colors hover:text-fg">
-              Dashboard
-            </Link>
+            <a href="#notion" className="transition-colors hover:text-fg">
+              Notion
+            </a>
           </nav>
           <div className="flex items-center gap-1.5">
             <ThemeToggle />
-            <ButtonLink href="/sign-in" variant="ghost" size="sm" className="hidden sm:inline-flex">
-              Sign in
-            </ButtonLink>
-            <ButtonLink href="/new" size="sm" variant="inverse">
-              Create invoice
-            </ButtonLink>
+            {user ? (
+              <>
+                <ButtonLink href="/dashboard" size="sm" variant="inverse">
+                  <LayoutDashboard className="size-3.5" />
+                  Dashboard
+                </ButtonLink>
+                <Link href="/dashboard" aria-label="Your account" className="ml-1">
+                  <Avatar
+                    user={{
+                      name: user.name,
+                      email: user.email,
+                      image: user.image ?? null,
+                    }}
+                  />
+                </Link>
+              </>
+            ) : (
+              <>
+                <ButtonLink href="/sign-in" variant="ghost" size="sm" className="hidden sm:inline-flex">
+                  Sign in
+                </ButtonLink>
+                <ButtonLink href="/new" size="sm" variant="inverse">
+                  Get started
+                </ButtonLink>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -239,17 +405,20 @@ export default function LandingPage() {
               Create an invoice
               <ArrowRight className="size-4 transition-transform duration-250 ease-standard group-hover/cta:translate-x-1" />
             </ButtonLink>
-            <ButtonLink href="/dashboard" variant="secondary" size="lg">
-              Open dashboard
-            </ButtonLink>
+            {user ? (
+              <ButtonLink href="/dashboard" variant="secondary" size="lg">
+                Open dashboard
+              </ButtonLink>
+            ) : (
+              <ButtonLink href="/sign-in" variant="secondary" size="lg">
+                Sign in with Google
+              </ButtonLink>
+            )}
           </div>
         </div>
 
-        <p
-          style={stagger(3, 90)}
-          className="animate-enter mt-6 flex flex-wrap gap-x-6 gap-y-1 text-sm text-faint"
-        >
-          {["No sign-up needed", "Nothing sent without your OK", "Works with screenshots"].map((item) => (
+        <p style={stagger(3, 90)} className="animate-enter mt-6 flex flex-wrap gap-x-6 gap-y-1 text-sm text-faint">
+          {["One-click Google sign-in", "Nothing sent without your OK", "Works with screenshots"].map((item) => (
             <span key={item} className="inline-flex items-center gap-1.5">
               <Check className="size-3.5 text-fg" />
               {item}
@@ -326,6 +495,57 @@ export default function LandingPage() {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      {/* Notion */}
+      <section id="notion" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-20 sm:px-6 sm:py-28">
+        <SectionLabel index="03">Notion</SectionLabel>
+        <div className="mt-5 grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
+          <div>
+            <h2 className="reveal text-4xl leading-[1.02] font-semibold tracking-[-0.035em] text-balance sm:text-6xl">
+              Plan in Notion.
+              <br /> <span className="text-faint">Get paid from it.</span>
+            </h2>
+            <p className="reveal mt-6 max-w-md text-lg leading-relaxed text-muted">
+              Your projects already live in Notion. Connect it once and the work you finish turns into the invoice you
+              send.
+            </p>
+
+            <ul className="mt-10 border-t border-fg">
+              {NOTION_STEPS.map(({ icon: Icon, title, body, available }) => (
+                <li
+                  key={title}
+                  className="reveal group grid grid-cols-[auto_1fr] gap-x-5 gap-y-1 border-b border-line py-6"
+                >
+                  <Icon className="size-5 translate-y-1 text-faint transition-colors duration-250 group-hover:text-brand-text" />
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <h3 className="font-semibold">{title}</h3>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 font-mono text-[10px] tracking-wider uppercase ${
+                        available ? "border-success/30 bg-success-soft text-success" : "border-line-strong text-faint"
+                      }`}
+                    >
+                      {available ? "Available" : "Coming soon"}
+                    </span>
+                  </div>
+                  <p className="col-start-2 leading-relaxed text-muted">{body}</p>
+                </li>
+              ))}
+            </ul>
+
+            <ButtonLink
+              href={user ? "/settings/integrations" : "/sign-in?next=/settings/integrations"}
+              variant="secondary"
+              size="lg"
+              className="reveal mt-8 group/notion"
+            >
+              Connect Notion
+              <ArrowRight className="size-4 transition-transform duration-250 ease-standard group-hover/notion:translate-x-1" />
+            </ButtonLink>
+          </div>
+
+          <NotionPreview />
         </div>
       </section>
 

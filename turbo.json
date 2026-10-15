@@ -6,7 +6,13 @@
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"],
-      "env": ["DATABASE_URL", "DIRECT_URL","PAYPAL_CLIENT_ID", "PAYPAL_SECRET", "PAYPAL_WEBHOOK_ID", "LLM_API_KEY", "LLM_MODEL"]
+      "env": [
+        "DATABASE_URL", "DIRECT_URL",
+        "PAYPAL_CLIENT_ID", "PAYPAL_SECRET", "PAYPAL_WEBHOOK_ID",
+        "LLM_API_KEY", "LLM_MODEL",
+        "BETTER_AUTH_SECRET", "BETTER_AUTH_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+        "NOTION_CLIENT_ID", "NOTION_CLIENT_SECRET", "TOKEN_ENCRYPTION_KEY"
+      ]
     },
     "db:generate": {
       "inputs": ["prisma/schema.prisma"],

@@ -1,0 +1,20 @@
+{
+  "name": "@repo/notion",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@notionhq/client": "5.27.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "typescript": "7.0.2"
+  }
+}

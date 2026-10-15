@@ -1,20 +1,31 @@
 import "server-only";
-import { db } from "./services";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { cache } from "react";
+import { auth, type SessionUser } from "./auth";
 
-let cachedUserId: string | undefined;
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("Please sign in to continue.");
+  }
+}
+
+/** The signed-in session for this request (deduplicated across a render), or null. */
+export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
+
+/** For API routes: the signed-in user's id, or throws UnauthorizedError (a 401 via errorResponse). */
+export async function getCurrentUserId(): Promise<string> {
+  const session = await getSession();
+  if (!session) throw new UnauthorizedError();
+  return session.user.id;
+}
 
 /**
- * The signed-in user. For now there is no login: everything belongs to one demo user,
- * created on first use. Replace this function when real authentication is added.
+ * For pages: the signed-in user, or a redirect to sign-in. proxy.ts only checks that a session
+ * cookie exists, so every protected page must still call this.
  */
-export async function getCurrentUserId(): Promise<string> {
-  if (cachedUserId) return cachedUserId;
-  const email = process.env.DEMO_USER_EMAIL ?? "demo@invoicegpt.app";
-  const user = await db().user.upsert({
-    where: { email },
-    update: {},
-    create: { email, name: process.env.DEMO_USER_NAME ?? "Demo Freelancer" },
-  });
-  cachedUserId = user.id;
-  return user.id;
+export async function requireUser(returnTo: string): Promise<SessionUser> {
+  const session = await getSession();
+  if (!session) redirect(`/sign-in?next=${encodeURIComponent(returnTo)}`);
+  return session.user;
 }

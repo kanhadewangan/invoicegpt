@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
+import { requireUser } from "@/lib/server/current-user";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  // No login yet, so the sidebar shows the demo user configured in .env.local.
-  return <AppShell userName={process.env.DEMO_USER_NAME ?? "Demo Freelancer"}>{children}</AppShell>;
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const user = await requireUser("/dashboard");
+  return <AppShell user={{ name: user.name, email: user.email, image: user.image ?? null }}>{children}</AppShell>;
 }

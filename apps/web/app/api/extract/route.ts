@@ -1,6 +1,7 @@
 import { extractInvoice, isSupportedImageType } from "@repo/ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getCurrentUserId } from "@/lib/server/current-user";
 import { errorResponse } from "@/lib/server/errors";
 import { getAI } from "@/lib/server/services";
 
@@ -23,6 +24,8 @@ const BodySchema = z
 
 export async function POST(request: Request) {
   try {
+    // Signed-in users only: every call spends AI credits.
+    await getCurrentUserId();
     const body = BodySchema.parse(await request.json());
     const image = body.image && isSupportedImageType(body.image.mediaType)
       ? { data: body.image.data, mediaType: body.image.mediaType }

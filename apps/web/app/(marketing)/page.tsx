@@ -198,6 +198,9 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-1.5">
             <ThemeToggle />
+            <ButtonLink href="/sign-in" variant="ghost" size="sm" className="hidden sm:inline-flex">
+              Sign in
+            </ButtonLink>
             <ButtonLink href="/new" size="sm" variant="inverse">
               Create invoice
             </ButtonLink>

@@ -1,12 +1,15 @@
 import "server-only";
 import { AIError } from "@repo/ai";
+import { isNotionError, notionErrorMessage } from "@repo/notion";
 import { PayPalError } from "@repo/paypal";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { UnauthorizedError } from "./current-user";
 import { ConfigError } from "./env";
 import { InvoiceStateError } from "./invoices";
+import { NotionNotConnectedError } from "./notion";
 
-export type ApiError = { error: string; issues?: { path: string; message: string }[] };
+export type ApiError = { error: string; code?: string; issues?: { path: string; message: string }[] };
 
 const NETWORK_ERROR = /ENETUNREACH|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EHOSTUNREACH|Can't reach database/;
 
@@ -19,9 +22,13 @@ export function isDatabaseUnreachable(error: unknown): boolean {
 
 /** Turns any thrown error into a JSON response with a message that is safe to show users. */
 export function errorResponse(error: unknown, extra: Record<string, unknown> = {}) {
-  console.error(error);
+  // Signed-out requests are expected, not failures worth a stack trace.
+  if (!(error instanceof UnauthorizedError)) console.error(error);
   const json = (status: number, body: ApiError) => NextResponse.json({ ...body, ...extra }, { status });
 
+  if (error instanceof UnauthorizedError) {
+    return json(401, { error: error.message });
+  }
   if (error instanceof ZodError) {
     return json(400, {
       error: "Some fields are invalid.",
@@ -32,6 +39,12 @@ export function errorResponse(error: unknown, extra: Record<string, unknown> = {
     // 4xx from PayPal usually means bad input (e.g. an email PayPal rejects).
     const status = error.status >= 400 && error.status < 500 && error.status !== 401 ? 400 : 502;
     return json(status, { error: `PayPal: ${error.message}` });
+  }
+  if (error instanceof NotionNotConnectedError) {
+    return json(409, { error: error.message, code: `notion_${error.reason}` } as ApiError);
+  }
+  if (isNotionError(error)) {
+    return json(502, { error: notionErrorMessage(error) });
   }
   if (error instanceof AIError) {
     return json(error.reason === "service_unavailable" ? 503 : 422, { error: error.message });

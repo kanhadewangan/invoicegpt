@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { CursorDither } from "@/components/cursor-dither";
+import { SmoothScroll } from "@/components/smooth-scroll";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink, Logo, stagger } from "@/components/ui";
 import { Avatar } from "@/components/user-menu";
@@ -325,6 +327,7 @@ export default async function LandingPage() {
 
   return (
     <div className="relative isolate overflow-x-clip">
+      <SmoothScroll />
       <Backdrop />
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
@@ -375,7 +378,8 @@ export default async function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-7xl px-4 pt-14 pb-16 sm:px-6 sm:pt-24 sm:pb-24">
+      <section className="relative mx-auto max-w-7xl px-4 pt-14 pb-16 sm:px-6 sm:pt-24 sm:pb-24">
+        <CursorDither className="pointer-events-none absolute inset-0 -z-[5] size-full text-brand opacity-45 [mask-image:linear-gradient(to_bottom,black_85%,transparent)]" />
         <p
           style={stagger(0, 90)}
           className="animate-enter flex items-center gap-3 font-mono text-xs tracking-wider text-faint uppercase"
@@ -456,7 +460,7 @@ export default async function LandingPage() {
           {STEPS.map(({ title, body, actor }, index) => (
             <li
               key={title}
-              className="reveal group grid gap-3 border-b border-line py-8 transition-colors duration-250 hover:bg-subtle/40 sm:grid-cols-[6rem_1fr] md:grid-cols-[8rem_1fr_1fr_7rem] md:items-baseline md:gap-8 md:py-10"
+              className="spotlight group grid gap-3 border-b border-line py-8 transition-colors duration-250 hover:bg-subtle/40 sm:grid-cols-[6rem_1fr] md:grid-cols-[8rem_1fr_1fr_7rem] md:items-baseline md:gap-8 md:py-10"
             >
               <span className="font-mono text-sm text-faint">0{index + 1}</span>
               <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h3>
@@ -487,7 +491,7 @@ export default async function LandingPage() {
             {FEATURES.map(({ icon: Icon, title, body }) => (
               <li
                 key={title}
-                className="reveal group grid grid-cols-[auto_1fr] gap-x-5 gap-y-1 border-b border-line py-6 sm:grid-cols-[auto_12rem_1fr] sm:items-baseline"
+                className="spotlight group grid grid-cols-[auto_1fr] gap-x-5 gap-y-1 border-b border-line py-6 sm:grid-cols-[auto_12rem_1fr] sm:items-baseline"
               >
                 <Icon className="size-5 translate-y-1 text-faint transition-colors duration-250 group-hover:text-brand-text" />
                 <h3 className="font-semibold">{title}</h3>
@@ -516,7 +520,7 @@ export default async function LandingPage() {
               {NOTION_STEPS.map(({ icon: Icon, title, body, available }) => (
                 <li
                   key={title}
-                  className="reveal group grid grid-cols-[auto_1fr] gap-x-5 gap-y-1 border-b border-line py-6"
+                  className="spotlight group grid grid-cols-[auto_1fr] gap-x-5 gap-y-1 border-b border-line py-6"
                 >
                   <Icon className="size-5 translate-y-1 text-faint transition-colors duration-250 group-hover:text-brand-text" />
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -550,7 +554,8 @@ export default async function LandingPage() {
       </section>
 
       {/* CTA: inverted block, so it reads as the page's full stop in both themes */}
-      <section className="bg-fg text-canvas">
+      <section className="relative isolate overflow-hidden bg-fg text-canvas">
+        <CursorDither className="pointer-events-none absolute inset-0 -z-10 size-full text-brand opacity-70" />
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28">
           <h2 className="reveal max-w-4xl text-[clamp(2.75rem,7vw,6rem)] leading-[0.95] font-semibold tracking-[-0.045em] text-balance">
             Your next invoice is already in your chats.
@@ -575,7 +580,7 @@ export default async function LandingPage() {
         </div>
         <p
           aria-hidden
-          className="mx-auto max-w-7xl overflow-hidden px-4 text-[clamp(4rem,17vw,15rem)] leading-[0.8] font-semibold tracking-[-0.06em] text-line select-none sm:px-6"
+          className="scroll-fill mx-auto max-w-7xl overflow-hidden px-4 text-[clamp(4rem,17vw,15rem)] leading-[0.8] font-semibold tracking-[-0.06em] text-line select-none sm:px-6"
         >
           InvoiceGPT
         </p>

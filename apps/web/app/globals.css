@@ -373,6 +373,105 @@ body {
 }
 
 /*
+ * Spotlight: list rows light up as they cross the middle of the viewport and dim again
+ * as they leave, so the eye follows one row at a time. Scrubbed by scroll position; the
+ * wash and accent bar read the row's named view timeline. Without support rows stay lit.
+ */
+@keyframes spotlight {
+  0% {
+    opacity: 0.3;
+    transform: translateY(12px);
+  }
+  30% {
+    transform: none;
+  }
+  42%,
+  58% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes spotlight-glow {
+  0%,
+  28%,
+  72%,
+  100% {
+    opacity: 0;
+    transform: scaleY(0.4);
+  }
+  44%,
+  56% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility spotlight {
+  position: relative;
+  isolation: isolate;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+  }
+  /* Soft brand wash fading out to the right */
+  &::before {
+    inset: 0 -0.75rem;
+    z-index: -1;
+    background: linear-gradient(90deg, var(--brand-soft), transparent 75%);
+  }
+  /* Accent bar on the leading edge */
+  &::after {
+    inset-block: 0;
+    left: -0.75rem;
+    width: 2px;
+    background: var(--brand);
+  }
+
+  @supports (animation-timeline: view()) {
+    view-timeline-name: --spotlight;
+    animation: spotlight linear both;
+    animation-timeline: --spotlight;
+    animation-range: cover;
+
+    &::before,
+    &::after {
+      animation: spotlight-glow linear both;
+      animation-timeline: --spotlight;
+      animation-range: cover;
+    }
+  }
+}
+
+/*
+ * Big display type that fills with ink, left to right, as it scrolls into view.
+ * text-fill-color (not color) hides the glyph fill, so a text-* colour class can stay as the fallback.
+ */
+@utility scroll-fill {
+  @supports (animation-timeline: view()) {
+    -webkit-text-fill-color: transparent;
+    background: linear-gradient(90deg, var(--fg) 45%, var(--line) 55%) 100% 0 / 220% 100% no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: fill-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 100%;
+  }
+}
+
+@keyframes fill-in {
+  to {
+    background-position: 0 0;
+  }
+}
+
+/*
  * Reduced motion: drop spatial movement, keep short fades, stop ambient loops.
  */
 @media (prefers-reduced-motion: reduce) {
@@ -398,8 +497,15 @@ body {
   .animate-halo,
   .animate-scan,
   .animate-ripple,
-  .reveal {
+  .reveal,
+  .spotlight,
+  .spotlight::before,
+  .spotlight::after {
     animation: none !important;
+  }
+  .scroll-fill {
+    animation: none !important;
+    -webkit-text-fill-color: currentcolor;
   }
   .animate-draw :is(path, polyline, line) {
     animation: none !important;
@@ -409,4 +515,9 @@ body {
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Lenis drives scrolling itself; native smooth scrolling would fight it. */
+html.lenis {
+  scroll-behavior: auto;
 }
